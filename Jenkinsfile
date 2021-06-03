@@ -58,12 +58,12 @@ node {
 		// Example shows how to run a check-only deploy.
 		// -------------------------------------------------------------------------
 
-		//stage('Check Only Deploy') {
-		//    rc = command "${toolbelt}/sfdx force:mdapi:deploy --checkonly --wait 10 -d manifest/. --targetusername UAT --testlevel ${TEST_LEVEL}"
-		//    if (rc != 0) {
-		//        error 'Salesforce deploy failed.'
-		//    }
-		//}
+		stage('Check Only Deploy') {
+		    rc = command "${toolbelt}/sfdx force:mdapi:deploy --checkonly --wait 10 -d manifest/. --targetusername UAT --testlevel ${TEST_LEVEL}"
+		    if (rc != 0) {
+		        error 'Salesforce deploy failed.'
+		   }
+		}
 	    }
 	}
 }
