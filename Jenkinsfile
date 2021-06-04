@@ -5,7 +5,7 @@ node {
     def SF_CONSUMER_KEY=env.SF_CONSUMER_KEY
     def SF_USERNAME=env.SF_USERNAME
     def SERVER_KEY_CREDENTIALS_ID=env.SERVER_KEY_CREDENTIALS_ID
-    def DEPLOYDIR='force-app'
+    
     def TEST_LEVEL='RunLocalTests'
     def SF_INSTANCE_URL = env.SF_INSTANCE_URL ?: "https://test.salesforce.com"
 
@@ -35,7 +35,7 @@ node {
 		// -------------------------------------------------------------------------
 
 		stage('Authorize to Salesforce') {
-			rc = command "${toolbelt}/sfdx auth:jwt:grant --instanceurl ${SF_INSTANCE_URL} --clientid ${SF_CONSUMER_KEY} --jwtkeyfile ${server_key_file} --username ${SF_USERNAME} --setalias UAT"
+			rc = command "${toolbelt}/sfdx auth:jwt:grant --instanceurl ${SF_INSTANCE_URL} --clientid ${SF_CONSUMER_KEY} --jwtkeyfile ${server_key_file} --username ${SF_USERNAME} --setalias SFDX"
 		    if (rc != 0) {
 			error 'Salesforce org authorization failed.'
 		    }
@@ -45,9 +45,17 @@ node {
 		// -------------------------------------------------------------------------
 		// Deploy metadata and execute unit tests.
 		// -------------------------------------------------------------------------
+		stage('Install sfpowerkit'){
+		   bat 'echo 'y' | sfdx plugins:install sfpowerkit'
+		}
+		
+		    stage('Delta changes'){
+		   bat 'sfdx sfpowerkit:project:diff --revisionfrom 760b2bd98fa12b79d3c9282e3a3ca9356ab4c11f --revisionto 313e9e01132fb3e208b0902ec91029b1ffd237f9 --output config'
+	    }
 
+			    
 		stage('Deploy and Run Tests') {
-		    rc = command "${toolbelt}/sfdx force:mdapi:deploy --wait 10 -d manifest/. --targetusername UAT --testlevel ${TEST_LEVEL}"
+		    rc = command "${toolbelt}/sfdx force:mdapi:deploy --wait 10 -d config/. --targetusername SFDX --testlevel ${TEST_LEVEL}"
 		    if (rc != 0) {
 			error 'Salesforce deploy and test run failed.'
 		    }
@@ -59,7 +67,7 @@ node {
 		// -------------------------------------------------------------------------
 
 		stage('Check Only Deploy') {
-		    rc = command "${toolbelt}/sfdx force:mdapi:deploy --checkonly --wait 10 -d manifest/. --targetusername UAT --testlevel ${TEST_LEVEL}"
+		    rc = command "${toolbelt}/sfdx force:mdapi:deploy --checkonly --wait 10 -d config/. --targetusername UAT --testlevel ${TEST_LEVEL}"
 		    if (rc != 0) {
 		        error 'Salesforce deploy failed.'
 		   }
